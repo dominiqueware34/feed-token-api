@@ -1,16 +1,19 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import { NextApiRequest } from "next"
-import getstream from "getstream"
+import { NextApiRequest, NextApiResponse } from "next"
+import { connect } from "getstream"
 
-const client = getstream.connect(
-	process.env.STREAM_API_KEY as string,
-	process.env.STREAM_SECRET_KEY as string,
-	process.env.STREAM_PROJECT_ID ?? ""
-)
 interface InputData {
 	userId: string
 }
-export default function handler(req: NextApiRequest) {
+
+type Data = {
+	data: string
+	error?: string
+}
+export default function handler(
+	req: NextApiRequest,
+	res: NextApiResponse<Data>
+) {
 	if (req.method !== "POST") {
 		return new Response("Method not allowed", { status: 405 })
 	}
@@ -20,15 +23,23 @@ export default function handler(req: NextApiRequest) {
 	}
 
 	const token = authorization.replace("Bearer ", "")
+
 	if (token !== process.env.API_SECRET_JWT) {
-		return new Response("Unauthorized", { status: 401 })
+		return res.status(401).json({ error: "Unauthorized", data: null })
 	}
 	const { userId }: InputData = req.body
-	const userToken = client.createUserToken(userId)
-	return new Response(JSON.stringify({ data: userToken, error: null }), {
-		status: 200,
-		headers: {
-			"Content-Type": "application/json",
-		},
-	})
+
+	const streamClient = connect(
+		process.env.STREAM_API_KEY as string,
+		process.env.STREAM_SECRET_KEY as string,
+		undefined,
+		{
+			browser: false,
+			location: "us-east",
+		}
+	)
+
+	const userToken = streamClient.createUserToken(userId)
+
+	return res.status(200).json({ data: userToken })
 }
