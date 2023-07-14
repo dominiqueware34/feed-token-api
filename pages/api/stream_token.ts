@@ -19,13 +19,13 @@ export default function handler(
 	}
 	const authorization = req.headers.authorization
 	if (!authorization) {
-		return new Response("Unauthorized", { status: 401 })
+		return new Response("Unauthorizedzz", { status: 401 })
 	}
 
 	const token = authorization.replace("Bearer ", "")
 
 	if (token !== process.env.API_SECRET_JWT) {
-		return res.status(401).json({ error: "Unauthorized", data: null })
+		return res.status(401).json({ error: "Unauthorizedz", data: null })
 	}
 	const { userId }: InputData = req.body
 
